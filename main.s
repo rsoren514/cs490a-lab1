@@ -40,22 +40,18 @@ Start
 		; Wait 4 cycles
 		NOP
 		NOP
-		NOP
-		NOP
-
-loop
 		; Set direction flags for input mask
 		LDR			R3, =0x38
 		LDR			R4, =GPIO_PORTE_DIR_R
 		STR			R3, [R4]
-		
 		; Set DEN flags for input mask
 		LDR			R4, =GPIO_PORTE_DEN_R
 		STR			R3, [R4]
-		
+loop
 		; Load input pins from Port E
 		LDR			R4, =GPIO_PORTE_DATA_R
 		LDR			R5, [R4]
+		AND			R6, R5, R3
 		B			loop
 
 
