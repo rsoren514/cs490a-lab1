@@ -64,15 +64,18 @@ Start
       LDR         R4, =GPIO_PORTE_PCTL_R
       STRB        R6, [R4]
 loop
-      LDR         R4, =GPIO_PORTE_DATA_R
+      ; read data from portE
+      LDR         R4, =GPIO_PORTE_DATA_R 
       LDR         R5, [R4]
-      AND         R7, R5, R10
-      TEQ         R7, R6
+      
+      AND         R7, R5, R10 ;mask switch pins
+      TEQ         R7, R6 ;see if all switches are pressed (shorted to ground)
       ORREQ       R5, R8 ;if equal then turn on LED
       ANDNE       R5, R9 ;if not equal then turn off LED
-      STRB        R5, [R4]
+      STRB        R5, [R4] ;output
       
       B   loop
+
 
 
       ALIGN        ; make sure the end of this section is aligned
