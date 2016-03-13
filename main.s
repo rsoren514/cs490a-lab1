@@ -34,7 +34,7 @@ Start
 		LDR			R3, =0x10
 		LDR			R4, =SYSCTL_RCGCGPIO_R
 		LDR			R5, [R4]
-		EOR			R5, R5, R3
+		ORR			R5, R5, R3
 		STR			R5, [R4]
 		
 		; Wait 4 cycles
