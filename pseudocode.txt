@@ -1,5 +1,20 @@
-Set port E bit in RCGCGPIO register (mask 0x10) to enable Port E clock
-Wait 4 clock cycles after enabling Port E clock
-Store pin 2 bitmask in R8 (mask 0x04)
-Write inverse of R8 to Port E DIR register
-Write input / output pin mask to Port E DEN register (mask 0x3c)
+START:
+        Set port E bit in RCGCGPIO register (mask 0x10) to enable Port E clock
+        Wait 4 clock cycles after enabling Port E clock
+        Store pin 2 bitmask in R8 (mask 0x04)
+        Write mask in R8 to Port E DIR register (clears input pins, sets output pin)
+        Write input / output pin mask to Port E DEN register (mask 0x3C)
+        Store input pin mask in R10 for comparison
+        Store unlock (LED on) value in R6
+        Clear all bits in Port E analog mode selector (AMSEL)
+        Clear all bits in Port E analog function selector (AFSEL)
+        Clear all bits in Port E port control (PCTL) register to enable regular I/O
+
+LOOP:
+        Read the value of Port E DATA register into R5
+        Mask the bits we want from R5 into R7
+        If input pins in R7 equal unlock (LED on) condition in R6:
+                Set output pin bit in Port E data
+        Else:
+                Clear output pin bit in Port E data
+        Go to LOOP
