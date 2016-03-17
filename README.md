@@ -1,1 +1,1 @@
-# cs490a-lab1
+# cs490a-labs
