@@ -102,6 +102,7 @@ Init
 ;       * Wipes out R7.
 ;
 Delay
+;        LDR     R7, =0x63FFE
         LDR		R7, =0x4FFFF                    ; Initial value
 	  
 decr
@@ -133,7 +134,6 @@ led_off
         ; PF4 is 0 when the switch is DOWN and 1 when the switch
         ; is UP
         LDR     R8, [R6]                        ; load Port F DATA into R8
-        STRB    R4, [R6]
         AND     R8, R5                          ; test switch / PF4 bit
         TEQ     R8, R3                          ;       "
         BNE     led_off                         ; SW=off -> LED=off for 100ms
