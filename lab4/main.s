@@ -64,25 +64,128 @@ TimePt     SPACE  4
 
 Start BL   TExaS_Init  ; running at 80 MHz, scope voltmeter on PD3
       
-      BL      Init                            ; initialize
 
-; initialize Port E
-; initialize Port F
-; initialize debugging dump, including SysTick
+        CPSIE   I                               ; TExaS voltmeter, scope runs on interrupts
 
-
-      CPSIE   I    ; TExaS voltmeter, scope runs on interrupts
+        BL      Init_PortE                      ; initialize Port E
+        BL      Init_PortF                      ; initialize Port F
+        BL      Debug_Init                      ; initialize debugging dump, including SysTick
       
-      BL      Main                            ; run program (forever)
-      
+        BL      Main                            ; run program (forever)
+    
+        BL      Done                            ; shouldn't be reached
 
-loop  BL   Debug_Capture
+
+;------------Init_PortE------------
+; Initialization ritual from Lecture 3 / Slide 23
+; Input: none
+; Output: none
+; Modifies: see notes
+; Notes: clears R3, R4, R5, R6
+;
+Init_PortE
+        ; Set bit 5 of GPIO clock register (Port F)
+        LDR     R3, =0x10                       ; Port E mask
+        LDR     R4, =SYSCTL_RCGCGPIO_R          ; clock reg address
+        LDR     R5, [R4]                        ; load clock reg
+        ORR     R5, R5, R3                      ; set Port E bit
+        STRB    R5, [R4]                        ; write to clock reg
+        
+        ; Wait 4 clocks before writing to Port F regs
+        NOP                                     ; 1 cycle
+        NOP                                     ; 2 cycles
+        
+        ; Clear Port E AMSEL
+        LDR     R6, =0x00                       ; 3 cycles / AMSEL disable mask
+        LDR     R4, =GPIO_PORTE_AMSEL_R         ; 4 cycles / PE AMSEL address
+        STRB    R6, [R4]                        ; analog mode disabled
+        
+        ; Clear Port E PCTL
+        LDR     R4, =GPIO_PORTE_PCTL_R          ; PE PCTL address
+        STRB    R6, [R4]                        ; clear port function
+
+        ; Set DIRection of pin 0 (output) and pin 1 (input)
+        LDR     R3, =0x02                       ; PE0 mask
+        EOR     R7, R3, #0xFF                   ; input=0, output=1
+        LDR     R4, =GPIO_PORTE_DIR_R           ; PF DIR address
+        STRB    R7, [R4]                        ; write DIR reg
+
+        ; Clear Port E AFSEL
+        LDR     R4, =GPIO_PORTE_AFSEL_R         ; Port E AFSEL address
+        STRB    R6, [R4]                        ; analog function disabled
+        
+        ; Enable pull-up on PF4
+;        LDR     R4, =GPIO_PORTF_PUR_R           ; PF PUR address
+;        STRB    R3, [R4]                        ; enable PF4 pullup
+
+        ; Set Digital ENable for relevant pins
+        LDR     R3, =0x03                       ; mask pins 0 & 1
+        LDR     R4, =GPIO_PORTE_DEN_R           ; Port E DEN address
+        STRB    R3, [R4]                        ; enable pins 0 & 1
+        
+        ; Return
+        BX      LR                              ; Initialization complete
+
+
+
+;------------Init_PortF------------
+; Initializes Port F
+; Input: none
+; Output: none
+; Modifies: none
+; Notes:
+Init_PortF
+
+        ; Set bit 5 of GPIO clock register (Port F)
+        LDR     R3, =0x20                       ; Port F mask
+        LDR     R4, =SYSCTL_RCGCGPIO_R          ; clock reg address
+        LDR     R5, [R4]                        ; load clock reg
+        ORR     R5, R5, R3                      ; set Port F bit
+        STRB    R5, [R4]                        ; write to clock reg
+        
+        ; Wait 4 clocks before writing to Port F regs
+        NOP                                     ; 1 cycle
+        NOP                                     ; 2 cycles
+        
+        ; Clear Port F AMSEL
+        LDR     R6, =0x00                       ; 3 cycles / AMSEL disable mask
+        LDR     R4, =GPIO_PORTF_AMSEL_R         ; 4 cycles / PF AMSEL address
+        STRB    R6, [R4]                        ; analog mode disabled
+        
+        ; Clear Port F PCTL
+        LDR     R4, =GPIO_PORTF_PCTL_R          ; PF PCTL address
+        STRB    R6, [R4]                        ; clear port function
+
+        ; Set DIRection of pin 3 (output) and pin 4 (input)
+        LDR     R3, =0x10                       ; SW0 / PF4 mask
+        EOR     R7, R3, #0xFF                   ; input=0, output=1
+        LDR     R4, =GPIO_PORTF_DIR_R           ; PF DIR address
+        STRB    R7, [R4]                        ; write DIR reg
+
+        ; Clear Port F AFSEL
+        LDR     R4, =GPIO_PORTF_AFSEL_R         ; Port F AFSEL address
+        STRB    R6, [R4]                        ; analog function disabled
+        
+        ; Enable pull-up on PF4
+        LDR     R4, =GPIO_PORTF_PUR_R           ; PF PUR address
+        STRB    R3, [R4]                        ; enable PF4 pullup
+
+        ; Set Digital ENable for relevant pins
+        LDR     R3, =0x18                       ; mask pins 3 & 4
+        LDR     R4, =GPIO_PORTF_DEN_R           ; Port F DEN address
+        STRB    R3, [R4]                        ; enable pins 3 & 4
+        
+        ; Return
+        BX      LR                              ; Initialization complete
+
+
+
+loop
+        BL   Debug_Capture
 ;heartbeat
 ; Delay
 ;input PE1 test output PE0
-	  B    loop
-
-
+        B    loop
 
 
 
@@ -94,9 +197,10 @@ loop  BL   Debug_Capture
 ; Note: push/pop an even number of registers so C compiler is happy
 Debug_Init
       
-; init SysTick
+        BL  SysTick_Init                        ; init SysTick
+        BX LR
 
-      BX LR
+
 
 ;------------Debug_Capture------------
 ; Dump Port E and time into buffers
@@ -109,6 +213,14 @@ Debug_Capture
       BX LR
 
 
-    ALIGN                           ; make sure the end of this section is aligned
-    END                             ; end of file
-        
+
+;------------Done------------
+; Halts execution.
+; Input: none
+; Output: none
+; Modifies: none
+; Notes: none
+        NOP
+        ALIGN                                   ; make sure the end of
+                                                ;       this section is aligned
+        END                                     ; end of file
