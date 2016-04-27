@@ -23,7 +23,7 @@
  */
 
 #include <stdint.h>
-#include "tm4c123gh6pm.h"
+#include "inc/tm4c123gh6pm.h"
 #include "SysTickInts.h"
 
 #define NVIC_ST_CTRL_CLK_SRC    0x00000004  // Clock Source

@@ -19,7 +19,7 @@
 // Input: none
 // Output: none
 void DAC_Init(void){
-	SYSCTL_RCGC2_R |= 02; //enable port b
+	SYSCTL_RCGC2_R |= 0xFF; //enable port b
 	int delay = SYSCTL_RCGC2_R;
 	GPIO_PORTB_DEN_R |= 0x3F;
 	GPIO_PORTB_DIR_R |= 0x3F;

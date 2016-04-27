@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include "dac.h"
 #include "inc//tm4c123gh6pm.h"
-#include "inc//systickints.h"
+#include "systickints.h"
 
 uint8_t sineWave[64] = 
 {0x8,0x9,0xa,0xa,0xb,0xc,0xc,0xd,
@@ -28,6 +28,8 @@ uint8_t sineWave[64] =
 
 uint8_t current = 0;
 
+uint8_t isPlaying = 0;
+
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void); //Enable interrupts 
 
@@ -40,7 +42,9 @@ void EnableInterrupts(void); //Enable interrupts
 //           Minimum to be determined by YOU
 // Output: none
 void Sound_Init(uint32_t period){
+	DAC_Init();
 	current = 0;
+	SysTick_Init(NVIC_ST_RELOAD_M);
 	EnableInterrupts();
 }
 
@@ -55,17 +59,17 @@ void Sound_Init(uint32_t period){
 // Output: none
 
 void SysTick_Handler(void){
-	DAC_Out(*(sineWave+current));
+	if(!isPlaying) return;
+	DAC_Out(sineWave[current]);
 	if(++current > 63) current = 0;
 }
 
 void Sound_Play(uint32_t period){
-	if(!period){ 
-		DisableInterrupts();
+	if(!period){
+		isPlaying = 0;
+		NVIC_ST_RELOAD_R = NVIC_ST_RELOAD_M;
 		return;
 	}
-	SysTick_Init(period);   //needs adjustment
-	EnableInterrupts();
-	
-	
+	isPlaying = 1;
+	NVIC_ST_RELOAD_R = period*64;   //needs adjustment
 }
