@@ -28,9 +28,25 @@ int main(void){
   Sound_Init(0);
   // other initialization
   EnableInterrupts();
-	Sound_Play(5000);
-  while(1){ 
-		
+	//Sound_Play(5000); //test
+  uint8_t last = 0;
+	uint8_t current = 0;
+	while(1){
+		current = (uint8_t)Piano_In();
+		if(current != last){
+			if(current & 0x08){
+				Sound_Play(393);
+			}else if( current & 0x04){
+				Sound_Play(473);
+			}else if(current & 0x02){
+				Sound_Play(541);
+			}else if(current & 0x01) {
+				Sound_Play(397);
+			}else{
+				Sound_Play(0);
+			}
+			last = current;
+		}
   }         
 }
 
