@@ -41,7 +41,7 @@ int main(void){
 			}else if(current & 0x02){
 				Sound_Play(541);
 			}else if(current & 0x01) {
-				Sound_Play(397);
+				Sound_Play(624);
 			}else{
 				Sound_Play(0);
 			}
